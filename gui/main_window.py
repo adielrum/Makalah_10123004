@@ -210,7 +210,18 @@ class MainWindow(QMainWindow):
         """Apply application styling"""
         self.setStyleSheet("""
             QMainWindow {
-                background-color: #f5f5f5;
+                background-color: black;
+            }
+            QMenuBar {
+                background-color: black;
+                color: white;
+            }
+            QToolBar {
+                background-color: black;
+                color: white;
+            }
+            QWidget#graph_area {
+                background-color: black;
             }
             QGroupBox {
                 font-weight: bold;

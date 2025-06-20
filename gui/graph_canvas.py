@@ -51,7 +51,7 @@ class GraphCanvas(QWidget):
         
         self.setStyleSheet("""
             GraphCanvas {
-                background-color: #fafafa;
+                background-color: #f0f0f0;
                 border: 1px solid #ddd;
                 border-radius: 5px;
             }
