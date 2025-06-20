@@ -210,21 +210,41 @@ class MainWindow(QMainWindow):
         """Apply application styling"""
         self.setStyleSheet("""
             QMainWindow {
-                background-color: black;
+                background-color: #2E2E2E; /* A slightly softer black for the main window */
+                color: white;
             }
             QMenuBar {
                 background-color: black;
                 color: white;
+                border-bottom: 1px solid #3A3A3A;
+            }
+            QMenuBar::item {
+                background-color: black;
+                color: white;
+                padding: 4px 10px;
+            }
+            QMenuBar::item:selected {
+                background-color: #4A4A4A; /* Highlight color when a menu is opened */
+            }
+            QMenu {
+                background-color: black;
+                color: white;
+                border: 1px solid #3A3A3A;
+            }
+            QMenu::item:selected {
+                background-color: #4A4A4A;
             }
             QToolBar {
                 background-color: black;
                 color: white;
+                border-bottom: 1px solid #3A3A3A;
             }
             QWidget#graph_area {
                 background-color: black;
             }
             QGroupBox {
                 font-weight: bold;
+                color: white;
                 border: 2px solid #cccccc;
                 border-radius: 5px;
                 margin-top: 1ex;
@@ -234,6 +254,10 @@ class MainWindow(QMainWindow):
                 subcontrol-origin: margin;
                 left: 10px;
                 padding: 0 5px 0 5px;
+                color: white;
+            }
+            QLabel {
+                color: white;
             }
             QPushButton {
                 background-color: #4CAF50;
@@ -257,17 +281,12 @@ class MainWindow(QMainWindow):
                 background-color: #cccccc;
                 color: #666666;
             }
-            QToolBar {
-                background-color: #e0e0e0;
-                border: 1px solid #cccccc;
-                spacing: 3px;
-            }
             QStatusBar {
-                background-color: #e0e0e0;
-                border-top: 1px solid #cccccc;
+                background-color: black;
+                color: white;
+                border-top: 1px solid #3A3A3A;
             }
         """)
-    
     def _on_tool_changed(self, button):
         """Handle tool button changes"""
         tool_modes = ["add_vertex", "add_edge", "select", "delete"]

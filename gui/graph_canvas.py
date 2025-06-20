@@ -30,10 +30,10 @@ class GraphCanvas(QWidget):
         self.vertex_color = QColor(100, 150, 255)
         self.vertex_selected_color = QColor(255, 100, 100)
         self.vertex_cover_color = QColor(100, 255, 100)
-        self.edge_color = QColor(80, 80, 80)
+        self.edge_color = QColor(250, 250, 250)
         self.edge_selected_color = QColor(255, 150, 50)
         self.edge_removed_color = QColor(200, 200, 200)
-        self.background_color = QColor(250, 250, 250)
+        self.background_color = QColor(61, 64, 62)
         
         # Interaction state
         self.mode = "add_vertex"  # "add_vertex", "add_edge", "select", "delete"
@@ -51,7 +51,7 @@ class GraphCanvas(QWidget):
         
         self.setStyleSheet("""
             GraphCanvas {
-                background-color: #f0f0f0;
+                background-color: #3d403e;
                 border: 1px solid #ddd;
                 border-radius: 5px;
             }
