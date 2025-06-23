@@ -3,7 +3,7 @@
 Interactive graph canvas for vertex cover visualization
 """
 
-from PyQt6.QtWidgets import QWidget
+from PyQt6.QtWidgets import QWidget, QApplication
 from PyQt6.QtCore import Qt, pyqtSignal, QPointF
 from PyQt6.QtGui import QPainter, QPen, QBrush, QColor, QFont, QMouseEvent, QPaintEvent
 from typing import Optional, Set
@@ -19,17 +19,20 @@ class GraphCanvas(QWidget):
     
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setMinimumSize(600, 400)
+        self.setMinimumSize(800, 600)
         self.setMouseTracking(True)
         
         # Graph data
         self.graph = Graph()
         
         # Visual settings
-        self.vertex_radius = 20
-        self.vertex_color = QColor(100, 150, 255)
-        self.vertex_selected_color = QColor(255, 100, 100)
-        self.vertex_cover_color = QColor(100, 255, 100)
+        self.vertex_radius = 25
+        # Firebase-like colors
+        self.vertex_color = QColor(66, 133, 244) # Google Blue
+        self.vertex_hover_color = QColor(244, 180, 0) # Google Yellow
+        self.vertex_selected_color = QColor(219, 68, 55) # Google Red
+        self.vertex_cover_color = QColor(15, 157, 88) # Google Green
+
         self.edge_color = QColor(250, 250, 250)
         self.edge_selected_color = QColor(255, 150, 50)
         self.edge_removed_color = QColor(200, 200, 200)
@@ -48,7 +51,8 @@ class GraphCanvas(QWidget):
         self.highlighted_edges = set()
         self.removed_edges = set()
         self.added_vertices = set()
-        
+        self.hovered_vertex: Optional[Vertex] = None
+
         self.setStyleSheet("""
             GraphCanvas {
                 background-color: #3d403e;
@@ -124,6 +128,7 @@ class GraphCanvas(QWidget):
                         # Start edge creation
                         self.edge_start_vertex = clicked_vertex
                         self.selected_vertex = clicked_vertex
+                        self.hovered_vertex = None # Clear hover
                     else:
                         # Complete edge creation
                         if clicked_vertex != self.edge_start_vertex:
@@ -132,6 +137,7 @@ class GraphCanvas(QWidget):
                                 self.graph_changed.emit()
                         self.edge_start_vertex = None
                         self.selected_vertex = None
+                        self.hovered_vertex = None # Clear hover
                     self.update()
             
             elif self.mode == "select":
@@ -144,6 +150,7 @@ class GraphCanvas(QWidget):
                     self.drag_offset = QPointF(x - clicked_vertex.x, y - clicked_vertex.y)
                 else:
                     # Check if clicked on edge
+                    self.dragging_vertex = None # Ensure dragging is off if clicking background
                     clicked_edge = self._find_edge_at_position(x, y)
                     if clicked_edge:
                         self.selected_edge = clicked_edge
@@ -152,6 +159,7 @@ class GraphCanvas(QWidget):
                     else:
                         self.selected_vertex = None
                         self.selected_edge = None
+                self.hovered_vertex = None # Clear hover on click
                 self.update()
             
             elif self.mode == "delete":
@@ -165,6 +173,7 @@ class GraphCanvas(QWidget):
                     if clicked_edge:
                         self.graph.remove_edge(clicked_edge)
                         self.graph_changed.emit()
+                self.hovered_vertex = None # Clear hover on click
                         self.update()
     
     def mouseMoveEvent(self, event: QMouseEvent):
@@ -200,7 +209,15 @@ class GraphCanvas(QWidget):
             if self.selected_vertex == old_vertex:
                 self.selected_vertex = new_vertex
             
+            self.hovered_vertex = None # Clear hover while dragging
             self.update()
+        elif self.mode != "delete": # Don't highlight vertex on hover in delete mode
+            # Update hovered vertex for visual feedback
+            pos = event.position()
+            x, y = pos.x(), pos.y()
+            hovered = self.graph.get_vertex_at_position(x, y, self.vertex_radius)
+            if hovered != self.hovered_vertex:
+                self.hovered_vertex = hovered
     
     def mouseReleaseEvent(self, event: QMouseEvent):
         """Handle mouse release events"""
@@ -243,7 +260,12 @@ class GraphCanvas(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         
-        # Clear background
+        # Draw background gradient
+        # Using a subtle linear gradient for a modern look
+        gradient = QColor(61, 64, 62)
+        painter.fillRect(self.rect(), gradient)
+
+        # Original fill for compatibility, can be removed if gradient is preferred
         painter.fillRect(self.rect(), self.background_color)
         
         # Draw edges
@@ -262,27 +284,42 @@ class GraphCanvas(QWidget):
             # Determine edge color and style
             if edge in self.removed_edges:
                 pen = QPen(self.edge_removed_color, 2, Qt.PenStyle.DashLine)
-            elif edge in self.highlighted_edges or edge == self.selected_edge:
-                pen = QPen(self.edge_selected_color, 3)
+            elif edge in self.highlighted_edges:
+                pen = QPen(self.edge_selected_color, 3, Qt.PenStyle.SolidLine)
+            elif edge == self.selected_edge:
+                 pen = QPen(self.edge_selected_color, 3, Qt.PenStyle.DotLine) # Different style for selected edge
             else:
                 pen = QPen(self.edge_color, 2)
             
             painter.setPen(pen)
             painter.drawLine(int(edge.u.x), int(edge.u.y), int(edge.v.x), int(edge.v.y))
+
     
     def _draw_vertices(self, painter: QPainter):
         """Draw all vertices"""
-        font = QFont("Arial", 10, QFont.Weight.Bold)
+        font = QFont("Arial", 12, QFont.Weight.Bold)
         painter.setFont(font)
         
         for vertex in self.graph.get_vertices():
             # Determine vertex color
             if vertex in self.vertex_cover:
                 color = self.vertex_cover_color
-            elif vertex in self.added_vertices or vertex == self.selected_vertex:
+            elif vertex in self.added_vertices:
+                 color = self.vertex_color.lighter(150) # Lighter shade for added
+            elif vertex == self.selected_vertex:
                 color = self.vertex_selected_color
+            elif vertex == self.hovered_vertex and self.mode != "delete":
+                color = self.vertex_hover_color
             else:
                 color = self.vertex_color
+
+            # Optional: Subtle gradient for vertex fill
+            gradient = QBrush(color)
+            # if color != self.vertex_cover_color: # Apply gradient only to non-cover vertices
+            #     gradient = QLinearGradient(vertex.x - self.vertex_radius, vertex.y - self.vertex_radius,
+            #                                vertex.x + self.vertex_radius, vertex.y + self.vertex_radius)
+            #     gradient.setColorAt(0, color.lighter(120))
+            #     gradient.setColorAt(1, color.darker(120))
             
             # Draw vertex circle
             painter.setPen(QPen(Qt.GlobalColor.black, 2))

@@ -14,7 +14,7 @@ from .graph_canvas import GraphCanvas
 from .algorithm_panel import AlgorithmPanel
 from models import StepResult, VertexCoverResult
 import json
-
+from PyQt6.QtGui import QLinearGradient, QColor, QBrush
 class MainWindow(QMainWindow):
     """Main application window"""
     
@@ -22,7 +22,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("Vertex Cover Visualization Tool")
         self.setGeometry(100, 100, 1200, 800)
-        
+
         # Create central widget and layout
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -30,21 +30,21 @@ class MainWindow(QMainWindow):
         # Create main layout
         main_layout = QHBoxLayout(central_widget)
         
-        # Create splitter for resizable panels
+        # Create splitter for resizable panels with a modern look
         splitter = QSplitter(Qt.Orientation.Horizontal)
+        splitter.setStyleSheet("""
+            QSplitter::handle {
+                background-color: #5A5A5A; /* Darker handle color */
+                width: 2px; /* Thinner handle */
+            }
+        """)
         main_layout.addWidget(splitter)
         
         # Create left panel (graph canvas and tools)
-        left_panel = self._create_left_panel()
-        splitter.addWidget(left_panel)
+        self._create_panels(splitter)
         
-        # Create right panel (algorithm controls)
-        self.algorithm_panel = AlgorithmPanel()
-        splitter.addWidget(self.algorithm_panel)
-        
-        # Set splitter proportions
+        # Set initial splitter proportions
         splitter.setSizes([800, 400])
-        
         # Setup menu bar and toolbar
         self._setup_menu_bar()
         self._setup_toolbar()
@@ -55,14 +55,25 @@ class MainWindow(QMainWindow):
         
         # Apply styling
         self._apply_styling()
-    
-    def _create_left_panel(self) -> QWidget:
-        """Create the left panel with graph canvas and tools"""
-        panel = QWidget()
-        layout = QVBoxLayout(panel)
+
+    def _create_panels(self, splitter):
+        """Create the left and right panels and add them to the splitter"""
+        # Create left panel (graph canvas and tools)
+        self.left_panel = QWidget()
+        self.left_panel.setObjectName("left_panel") # Object name for styling
+        left_layout = QVBoxLayout(self.left_panel)
+        splitter.addWidget(self.left_panel)
+
+        # Create right panel (algorithm controls)
+        self.right_panel = QWidget()
+        self.right_panel.setObjectName("right_panel") # Object name for styling
+        self.algorithm_panel = AlgorithmPanel()
+        right_layout = QVBoxLayout(self.right_panel)
+        right_layout.addWidget(self.algorithm_panel)
+        splitter.addWidget(self.right_panel)
         
         # Graph editing tools
-        tools_group = QGroupBox("Graph Editing Tools")
+        tools_group = QGroupBox("Graph Tools") # Simplified group box title
         tools_layout = QHBoxLayout(tools_group)
         
         # Tool buttons
@@ -94,21 +105,20 @@ class MainWindow(QMainWindow):
         self.clear_btn = QPushButton("Clear Graph")
         self.clear_btn.clicked.connect(self._clear_graph)
         tools_layout.addWidget(self.clear_btn)
-        
-        layout.addWidget(tools_group)
+
+        left_layout.addWidget(tools_group)
         
         # Graph canvas
         self.graph_canvas = GraphCanvas()
-        layout.addWidget(self.graph_canvas)
+        left_layout.addWidget(self.graph_canvas)
         
         # Graph info
         info_layout = QHBoxLayout()
         self.graph_info_label = QLabel("Vertices: 0, Edges: 0")
         info_layout.addWidget(self.graph_info_label)
         info_layout.addStretch()
-        layout.addLayout(info_layout)
-        
-        return panel
+        left_layout.addLayout(info_layout)
+
     
     def _setup_menu_bar(self):
         """Setup the menu bar"""
@@ -209,64 +219,89 @@ class MainWindow(QMainWindow):
     def _apply_styling(self):
         """Apply application styling"""
         self.setStyleSheet("""
+            /* --- General Styles --- */
             QMainWindow {
-                background-color: #2E2E2E; /* A slightly softer black for the main window */
-                color: white;
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                                           stop:0 #1E1E2E, /* Dark base */
+                                           stop:1 #282838); /* Slightly lighter */
+                color: #E0E0E0; /* Light grey text */
             }
+            
+            /* --- Menu Bar --- */
             QMenuBar {
-                background-color: black;
-                color: white;
-                border-bottom: 1px solid #3A3A3A;
+                background-color: #282838; /* Match window gradient start */
+                color: #E0E0E0;
+                border-bottom: none; /* Remove border */
             }
             QMenuBar::item {
-                background-color: black;
-                color: white;
+                background-color: transparent;
+                color: #E0E0E0;
                 padding: 4px 10px;
             }
             QMenuBar::item:selected {
-                background-color: #4A4A4A; /* Highlight color when a menu is opened */
+                background-color: rgba(80, 80, 100, 0.3); /* Subtle highlight */
+                border-radius: 4px;
             }
+            
+            /* --- Menu --- */
             QMenu {
-                background-color: black;
-                color: white;
-                border: 1px solid #3A3A3A;
+                background-color: #353545; /* Slightly darker than window */
+                color: #E0E0E0;
+                border: 1px solid #454555;
+                border-radius: 4px;
+            }
+             QMenu::separator {
+                height: 1px;
+                background-color: #454555;
+                margin-left: 10px;
+                margin-right: 10px;
+            }
+             QMenu::item {
+                padding: 5px 20px 5px 10px;
             }
             QMenu::item:selected {
-                background-color: #4A4A4A;
+                background-color: rgba(80, 80, 100, 0.5);
+                 border-radius: 4px;
             }
+            
+            /* --- Tool Bar --- */
             QToolBar {
-                background-color: black;
-                color: white;
-                border-bottom: 1px solid #3A3A3A;
+                background-color: #282838;
+                color: #E0E0E0;
+                border-bottom: none;
+                spacing: 10px; /* Space between tool buttons */
             }
-            QWidget#graph_area {
-                background-color: black;
-            }
+
+            /* --- Group Box --- */
             QGroupBox {
                 font-weight: bold;
-                color: white;
-                border: 2px solid #cccccc;
+                color: #E0E0E0;
+                border: 1px solid #454555;
                 border-radius: 5px;
                 margin-top: 1ex;
                 padding-top: 10px;
+                background-color: rgba(40, 40, 50, 0.5); /* Semi-transparent background */
             }
             QGroupBox::title {
                 subcontrol-origin: margin;
                 left: 10px;
                 padding: 0 5px 0 5px;
-                color: white;
+                color: #B0B0B0; /* Slightly lighter title color */
             }
+            
+            /* --- Labels --- */
             QLabel {
-                color: white;
+                color: #E0E0E0;
             }
+            
+            /* --- Buttons --- */
             QPushButton {
-                background-color: #4CAF50;
+                background-color: #5A5A5A; /* Neutral grey button */
                 border: none;
                 color: white;
                 padding: 8px 16px;
                 border-radius: 4px;
                 font-weight: bold;
-                min-width: 80px;
             }
             QPushButton:hover {
                 background-color: #45a049;
@@ -275,14 +310,17 @@ class MainWindow(QMainWindow):
                 background-color: #3d8b40;
             }
             QPushButton:checked {
-                background-color: #2196F3;
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                                           stop:0 #6A1B9A, /* Purple start */
+                                           stop:1 #AB47BC); /* Lighter purple end */
+                 color: white;
             }
             QPushButton:disabled {
                 background-color: #cccccc;
                 color: #666666;
             }
             QStatusBar {
-                background-color: black;
+                background-color: #282838;
                 color: white;
                 border-top: 1px solid #3A3A3A;
             }

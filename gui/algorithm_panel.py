@@ -136,16 +136,17 @@ class AlgorithmPanel(QWidget):
                 padding: 0 5px 0 5px;
             }
             QPushButton {
-                background-color: #4CAF50;
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                                        stop:0 #FF6A00, stop:1 #EE0979); /* Firebase-like gradient */
                 border: none;
                 color: white;
                 padding: 8px 16px;
-                border-radius: 4px;
+                border-radius: 8px; /* Increased border radius for a modern look */
                 font-weight: bold;
             }
             QPushButton:hover {
-                background-color: #45a049;
-            }
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                                        stop:0 #EE0979, stop:1 #FF6A00); /* Reversed gradient on hover */            }
             QPushButton:pressed {
                 background-color: #3d8b40;
             }
@@ -153,6 +154,23 @@ class AlgorithmPanel(QWidget):
                 background-color: #cccccc;
                 color: #666666;
             }
+            QComboBox {
+                border: 1px solid #cccccc;
+                border-radius: 4px;
+                padding: 5px;
+                background: #f8f8f8; /* Light background */
+            }
+            QComboBox::drop-down {
+                subcontrol-origin: padding;
+                subcontrol-position: top right;
+                width: 15px;
+                border-left-width: 1px;
+                border-left-color: darkgray;
+                border-left-style: solid; /* Visual separator */
+                border-top-right-radius: 3px;
+                border-bottom-right-radius: 3px;
+            }
+
         """)
     
     def _load_algorithms(self):
