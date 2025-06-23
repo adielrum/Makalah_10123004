@@ -174,7 +174,7 @@ class GraphCanvas(QWidget):
                         self.graph.remove_edge(clicked_edge)
                         self.graph_changed.emit()
                 self.hovered_vertex = None # Clear hover on click
-                        self.update()
+                self.update()
     
     def mouseMoveEvent(self, event: QMouseEvent):
         """Handle mouse move events"""

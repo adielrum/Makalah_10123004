@@ -158,7 +158,7 @@ class AlgorithmPanel(QWidget):
                 border: 1px solid #cccccc;
                 border-radius: 4px;
                 padding: 5px;
-                background: #f8f8f8; /* Light background */
+                background: #darkgray; /* Light background */
             }
             QComboBox::drop-down {
                 subcontrol-origin: padding;
