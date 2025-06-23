@@ -11,7 +11,8 @@ from models import Graph, StepResult, VertexCoverResult
 # Available algorithms
 AVAILABLE_ALGORITHMS = {
     "2-Approximation": "two_approximation",
-    "Greedy": "greedy"
+    "Greedy": "greedy",
+    "Brute Force": "brute_force"
 }
 
 def get_available_algorithms() -> Dict[str, str]:

@@ -5,7 +5,7 @@ Interactive graph canvas for vertex cover visualization
 
 from PyQt6.QtWidgets import QWidget, QApplication
 from PyQt6.QtCore import Qt, pyqtSignal, QPointF
-from PyQt6.QtGui import QPainter, QPen, QBrush, QColor, QFont, QMouseEvent, QPaintEvent
+from PyQt6.QtGui import QPainter, QPen, QBrush, QColor, QFont, QMouseEvent, QPaintEvent, QLinearGradient
 from typing import Optional, Set
 from models import Graph, Vertex, Edge
 
@@ -28,10 +28,11 @@ class GraphCanvas(QWidget):
         # Visual settings
         self.vertex_radius = 25
         # Firebase-like colors
-        self.vertex_color = QColor(66, 133, 244) # Google Blue
+        self.vertex_color = QColor(128, 0, 128) # Purple start color for gradient
         self.vertex_hover_color = QColor(244, 180, 0) # Google Yellow
         self.vertex_selected_color = QColor(219, 68, 55) # Google Red
         self.vertex_cover_color = QColor(15, 157, 88) # Google Green
+        self.vertex_gradient_color = QColor(148, 0, 211) # Darker purple end color for gradient
 
         self.edge_color = QColor(250, 250, 250)
         self.edge_selected_color = QColor(255, 150, 50)
@@ -301,29 +302,26 @@ class GraphCanvas(QWidget):
         painter.setFont(font)
         
         for vertex in self.graph.get_vertices():
-            # Determine vertex color
-            if vertex in self.vertex_cover:
-                color = self.vertex_cover_color
+            # Determine vertex color and brush
+            if vertex == self.selected_vertex:
+                brush = QBrush(self.vertex_selected_color)
+            elif vertex == self.hovered_vertex:
+                brush = QBrush(self.vertex_hover_color)
+            elif vertex in self.vertex_cover:
+                brush = QBrush(self.vertex_cover_color)
             elif vertex in self.added_vertices:
-                 color = self.vertex_color.lighter(150) # Lighter shade for added
-            elif vertex == self.selected_vertex:
-                color = self.vertex_selected_color
-            elif vertex == self.hovered_vertex and self.mode != "delete":
-                color = self.vertex_hover_color
+                brush = QBrush(self.vertex_selected_color) # Highlight newly added vertices
             else:
-                color = self.vertex_color
-
-            # Optional: Subtle gradient for vertex fill
-            gradient = QBrush(color)
-            # if color != self.vertex_cover_color: # Apply gradient only to non-cover vertices
-            #     gradient = QLinearGradient(vertex.x - self.vertex_radius, vertex.y - self.vertex_radius,
-            #                                vertex.x + self.vertex_radius, vertex.y + self.vertex_radius)
-            #     gradient.setColorAt(0, color.lighter(120))
-            #     gradient.setColorAt(1, color.darker(120))
+                # Apply gradient for default vertices
+                gradient = QLinearGradient(vertex.x - self.vertex_radius, vertex.y - self.vertex_radius,
+                                           vertex.x + self.vertex_radius, vertex.y + self.vertex_radius)
+                gradient.setColorAt(0, self.vertex_color)
+                gradient.setColorAt(1, self.vertex_gradient_color)
+                brush = QBrush(gradient)
             
             # Draw vertex circle
-            painter.setPen(QPen(Qt.GlobalColor.black, 2))
-            painter.setBrush(QBrush(color))
+            painter.setPen(QPen(Qt.GlobalColor.transparent, 0)) # Remove outline
+            painter.setBrush(brush)
             painter.drawEllipse(
                 int(vertex.x - self.vertex_radius),
                 int(vertex.y - self.vertex_radius),
@@ -331,8 +329,8 @@ class GraphCanvas(QWidget):
                 self.vertex_radius * 2
             )
             
-            # Draw vertex label
-            painter.setPen(QPen(Qt.GlobalColor.black))
+            # Draw vertex ID
+            painter.setPen(QPen(Qt.GlobalColor.white)) # Change text color to white
             painter.drawText(
                 int(vertex.x - 10),
                 int(vertex.y + 5),
