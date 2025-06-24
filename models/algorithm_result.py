@@ -31,6 +31,7 @@ class VertexCoverResult:
     algorithm_name: str
     is_optimal: bool = False
     approximation_ratio: Optional[float] = None
+    time_taken: Optional[float] = None
     
     def __str__(self) -> str:
         result = f"Algorithm: {self.algorithm_name}\n"
@@ -38,5 +39,7 @@ class VertexCoverResult:
         result += f"Total Steps: {self.total_steps}\n"
         if self.approximation_ratio:
             result += f"Approximation Ratio: {self.approximation_ratio}\n"
+        if self.time_taken is not None:
+            result += f"Time Taken: {self.time_taken:.4f} seconds\n"
         result += f"Vertices: {[v.id for v in self.vertex_cover]}"
         return result

@@ -5,7 +5,7 @@ Algorithm control panel for vertex cover visualization
 
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QComboBox, QPushButton, 
-    QLabel, QTextEdit, QGroupBox, QSlider, QSpinBox
+    QLabel, QTextEdit, QGroupBox, QSlider, QSpinBox, QCheckBox
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QTimer
 from typing import Generator, Optional
@@ -14,10 +14,22 @@ from algorithms import get_available_algorithms, run_algorithm, get_algorithm_in
 
 class AlgorithmPanel(QWidget):
     """Control panel for algorithm selection and execution"""
-    
+
     # Signals
     algorithm_step = pyqtSignal(StepResult)
     algorithm_finished = pyqtSignal(VertexCoverResult)
+
+    def _on_skip_visualization_changed(self, state):
+        self.skip_visualization = (state == Qt.CheckState.Checked.value)
+        # If skipping visualization, disable step and pause buttons
+        if self.skip_visualization:
+            self.step_button.setEnabled(False)
+            self.pause_button.setEnabled(False)
+        else:
+            # Re-enable if not skipping and not running
+            if not self.is_running:
+                self.step_button.setEnabled(True)
+                self.pause_button.setEnabled(True)
     
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -26,6 +38,7 @@ class AlgorithmPanel(QWidget):
         self.is_running = False
         self.current_step = 0
         self.total_steps = []
+        self.skip_visualization = False # Initialize the attribute
         
         # Timer for step-by-step execution
         self.step_timer = QTimer()
@@ -69,6 +82,11 @@ class AlgorithmPanel(QWidget):
         self.speed_spinbox.setSuffix(" ms")
         speed_layout.addWidget(self.speed_spinbox)
         exec_layout.addLayout(speed_layout)
+
+        # Skip visualization checkbox
+        self.skip_visualization_checkbox = QCheckBox("Skip Visualization")
+        self.skip_visualization_checkbox.stateChanged.connect(self._on_skip_visualization_changed)
+        exec_layout.addWidget(self.skip_visualization_checkbox)
         
         # Control buttons
         button_layout = QHBoxLayout()
@@ -212,26 +230,47 @@ class AlgorithmPanel(QWidget):
         if not algorithm_name:
             return
         
+        # Ensure self.skip_visualization is in sync with the checkbox state
+        self.skip_visualization = self.skip_visualization_checkbox.isChecked()
+
+        self.is_running = True
+        self.current_step = 0
+        self.total_steps = []
+        self.progress_label.setText("Running algorithm...")
+        self.step_text.clear()
+        self.results_text.clear()
+
+        self.run_button.setEnabled(False)
+        self.step_button.setEnabled(not self.skip_visualization) # Disable step button if skipping visualization
+        self.pause_button.setEnabled(not self.skip_visualization) # Disable pause button if skipping visualization
+
+        # Disable speed control and skip visualization checkbox when running
+        self.speed_spinbox.setEnabled(False)
+        self.skip_visualization_checkbox.setEnabled(False)
+
         try:
-            # Initialize algorithm
-            self.algorithm_generator = run_algorithm(algorithm_name, self.graph)
-            self.current_step = 0
-            self.total_steps = []
-            self.is_running = True
-            
-            # Update UI state
-            self.run_button.setEnabled(False)
-            self.step_button.setEnabled(True)
-            self.pause_button.setEnabled(True)
-            
-            # Start automatic execution
-            self.step_timer.start(self.speed_spinbox.value())
-            
-            self.progress_label.setText("Algorithm running...")
-            self.step_text.setText("Starting algorithm execution...")
-            
+            self.algorithm_generator = run_algorithm(
+                self.algorithm_combo.currentText(), self.graph
+            )
+
+            if self.skip_visualization:
+                # Run instantly without visualization steps
+                while True:
+                    try:
+                        next(self.algorithm_generator)
+                    except StopIteration as e:
+                        result = e.value
+                        self._algorithm_finished(result)
+                        break
+            elif self.speed_spinbox.value() == 0:
+                # Run instantly if speed is 0 (but with visualization)
+                while True:
+                    self._execute_next_step()
+            else:
+                self.step_timer.start(self.speed_spinbox.value())
         except Exception as e:
-            self.step_text.setText(f"Error starting algorithm: {e}")
+            QMessageBox.critical(self, "Error", f"Failed to start algorithm: {e}")
+            self._reset_algorithm()
     
     def _execute_next_step(self):
         """Execute the next step of the algorithm"""
@@ -275,6 +314,10 @@ class AlgorithmPanel(QWidget):
         self.run_button.setEnabled(True)
         self.step_button.setEnabled(False)
         self.pause_button.setEnabled(False)
+
+        # Re-enable speed control and skip visualization checkbox
+        self.speed_spinbox.setEnabled(True)
+        self.skip_visualization_checkbox.setEnabled(True)
         
         # Show results
         self.progress_label.setText("Algorithm completed!")
@@ -310,6 +353,8 @@ class AlgorithmPanel(QWidget):
         self.total_steps = []
         
         # Reset UI state
+        self.speed_spinbox.setEnabled(True)
+        self.skip_visualization_checkbox.setEnabled(True)
         self.run_button.setText("Run Algorithm")
         self.run_button.setEnabled(True)
         self.step_button.setEnabled(False)

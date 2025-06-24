@@ -5,6 +5,7 @@ Algorithms package for vertex cover visualization tool
 
 import importlib
 import os
+import time # Import the time module
 from typing import Dict, Any, Generator
 from models import Graph, StepResult, VertexCoverResult
 
@@ -61,7 +62,19 @@ def run_algorithm(algorithm_name: str, graph: Graph) -> Generator[StepResult, No
         VertexCoverResult: Final result
     """
     algorithm_module = load_algorithm(algorithm_name)
-    return algorithm_module.run(graph)
+    
+    start_time = time.perf_counter()
+    algorithm_generator = algorithm_module.run(graph)
+    try:
+        while True:
+            step_result = next(algorithm_generator)
+            yield step_result
+    except StopIteration as e:
+        final_result = e.value
+        end_time = time.perf_counter()
+        time_taken = end_time - start_time
+        final_result.time_taken = time_taken
+        return final_result
 
 def get_algorithm_info(algorithm_name: str) -> Dict[str, Any]:
     """

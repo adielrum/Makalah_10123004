@@ -375,7 +375,8 @@ class MainWindow(QMainWindow):
         self.graph_canvas.set_removed_edges(set())
         self.graph_canvas.set_added_vertices(set())
         
-        self.status_bar.showMessage(f"Algorithm completed! Vertex cover size: {len(result.vertex_cover)}")
+        time_taken_str = f" ({result.time_taken:.4f} seconds)" if result.time_taken is not None else ""
+        self.status_bar.showMessage(f"Algorithm completed! Vertex cover size: {len(result.vertex_cover)}{time_taken_str}")
     
     def _new_graph(self):
         """Create a new graph"""
