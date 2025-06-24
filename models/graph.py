@@ -76,6 +76,10 @@ class Graph:
         if u == v:  # No self-loops
             return False
         
+        # Ensure canonical order for edge creation
+        if u.id > v.id:
+            u, v = v, u # Swap to ensure u.id <= v.id
+            
         edge = Edge(u, v)
         if edge not in self._edges:
             self._edges.add(edge)
